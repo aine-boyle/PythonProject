@@ -12,8 +12,8 @@ print("Read labeled train reviews, ", (train["tweet"].size))
 
 #Clean Tweets
 def tweet_to_wordlist(tweet) :
-    tweet_text = BeautifulSoup(tweet).get_text()
-    tweet_text = re.sub("[^a-zA-Z]","",tweet_text)
+    tweet_text = BeautifulSoup(tweet, "lxml").get_text()
+    #tweet_text = re.sub("[^a-zA-Z]","",tweet_text)
     words = tweet_text.lower().split()
 
     return(words)
@@ -34,6 +34,9 @@ print("Parsing sentences from training set")
 for tweet in train["tweet"]:
     sentences += tweet_to_sentences(tweet, tokenizer)
 
+print(len(sentences))
+for x in range (0, 10):
+    print(sentences[x])
 #Get Tweets from DB
 #con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
 #print("Connected")

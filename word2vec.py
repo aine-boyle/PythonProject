@@ -1,10 +1,21 @@
-import gensim
+from gensim.models import word2vec
 import pyodbc
 import pandas as pd
 import re
 from bs4 import BeautifulSoup
 import nltk.data
 nltk.download()
+import logging
+
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',\
+                    level=logging.INFO)
+
+#Set Parameters
+num_features = 300  #Word vector dimensionality
+min_word_count = 10
+num_workers = 4     #Number of threads to run in parallel
+context = 10
+downsampling = 1e-3 #Downsample setting for frequent words
 
 #Train model w/ Training Dataset
 train = pd.read_csv("traintweets.csv", names = ['id', 'tweet', 'sentiment'])
@@ -37,6 +48,18 @@ for tweet in train["tweet"]:
 print(len(sentences))
 for x in range (0, 10):
     print(sentences[x])
+
+print("Training Model... ")
+model = word2vec.Word2Vec(sentences, workers = num_workers, \
+                          size= num_features, min_count=min_word_count, \
+                          window= context, sample= downsampling)
+
+model.init_sims(replace=True)
+
+model_name = "MyModel"
+model.save(model_name)
+
+print(model.doesnt_match("man woman child kitchen".split()))
 #Get Tweets from DB
 #con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
 #print("Connected")

@@ -1,17 +1,21 @@
-import pyodbc
-import re
-import numpy as np
+#import pyodbc
+#import numpy as np
 
-from gensim.models import word2vec
-import pandas as pd
-from bs4 import BeautifulSoup
-import nltk.data
-nltk.download()
-from nltk.corpus import stopwords
 import logging
+import nltk.data
+import pandas as pd
+import re
+
+nltk.download()
+
+from bs4 import BeautifulSoup
+from gensim.models import word2vec
+from nltk.corpus import stopwords
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',\
-                    level=logging.INFO)
+                   level=logging.ERROR)
+
+tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 #Set Parameters
 num_features = 300      #Word vector dimensionality
@@ -22,16 +26,15 @@ downsampling = 1e-3     #Downsample setting for frequent words
 
 #Train model w/ Training Dataset
 print("Reading CSV...")
-#train = pd.read_csv("traintweets.csv", names = ['id', 'tweet', 'sentiment'])
-train = pd.read_csv( "labeledTrainData.tsv", header=0,
- delimiter="\t", quoting=3 )
-#train = pd.read_csv("labeledTrainData.tsv", names = ['id', 'sentiment', 'review'])
-print("Read labeled train reviews, ", (train["review"].size))
+train = pd.read_csv("Sentiment Analysis Dataset.csv", names = ['ItemID', 'Sentiment', 'SentimentSource', 'SentimentText'])
+print("Read labeled train tweets, ", (train["SentimentText"].size))
+#train = pd.read_csv( "labeledTrainData.tsv", header=0, delimiter="\t", quoting=3 )
 
 #Clean Tweets
 def tweet_to_wordlist(tweet, remove_stopwords=False) :
+    #remove urls from tweets
+    tweet = re.sub(r"http\S+", "", tweet)
     tweet_text = BeautifulSoup(tweet, "lxml").get_text()
-    #tweet_text = re.sub("[^a-zA-Z]","",tweet_text)
     words = tweet_text.lower().split()
 
     if remove_stopwords:
@@ -39,8 +42,6 @@ def tweet_to_wordlist(tweet, remove_stopwords=False) :
         words = [w for w in words if not w in stops]
 
     return(words)
-
-tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 #Split Tweet into Parsed Sentences
 def tweet_to_sentences (tweet, tokenizer):
@@ -52,8 +53,9 @@ def tweet_to_sentences (tweet, tokenizer):
     return sentences
 
 sentences = []
+
 print("Parsing sentences from training set")
-for tweet in train["review"]:
+for tweet in train["SentimentText"]:
     sentences += tweet_to_sentences(tweet, tokenizer)
 
 print(len(sentences))
@@ -71,7 +73,10 @@ model_name = "MyModel"
 model.save(model_name)
 
 print(model.doesnt_match("man woman child kitchen".split()))
-    #Get Tweets from DB
+print(model.most_similar("sad"))
+
+#Get Tweets from DB
+
 #con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
 #print("Connected")
 
@@ -85,8 +90,3 @@ print(model.doesnt_match("man woman child kitchen".split()))
 #    model = gensim.models.Word2Vec(row[3], min_count = 1)
 #    print("model: " , model)
 #con.close()
-
-#sentences = [['first', 'sentence'], ['second', 'sentence']]
-#model = gensim.models.Word2Vec(sentences, min_count=1)
-#print("model: ", model)
-#print("sentence: ", model['sentence'])

@@ -1,4 +1,3 @@
-#import pyodbc
 #import numpy as np
 
 import logging
@@ -74,19 +73,3 @@ model.save(model_name)
 
 print(model.doesnt_match("man woman child kitchen".split()))
 print(model.most_similar("sad"))
-
-#Get Tweets from DB
-
-#con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
-#print("Connected")
-
-#cur = con.cursor()
-
-#cur.execute("SELECT * FROM twitter_data")
-
-#tweets = []
-#for row in cur.fetchall():
-#    tweets.append(row[3])
-#    model = gensim.models.Word2Vec(row[3], min_count = 1)
-#    print("model: " , model)
-#con.close()

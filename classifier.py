@@ -135,8 +135,38 @@ def sentTweetWords_final_score(text):
         score = sentence_score(sentence)
     return 1 / (1 + math.exp(-score))
 
+def getMostPos(**t) :
+    max = 0.00
+    tweet = ""
+    for key in t:
+        if(float(t[key]) > max) :
+            max = float(t[key])
+            tweet = key
+    return tweet
+
+def getMostNeg(**t):
+    min = 1.00
+    tweet = ""
+    for key in t:
+        if (float(t[key]) < min):
+            min = float(t[key])
+            tweet = key
+    return tweet
+
+def getAveScore(**t):
+    count = 0
+    total = 0.00
+    for key in t:
+        count = count + 1
+        score = float(t[key])
+        total = total + score
+    average = total / count
+    return average
+
 def main():
 #Get Tweets from DB
+
+    t = {};
 
     con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
     print("Connected")
@@ -150,7 +180,14 @@ def main():
         stripTweet = tweet.strip()
         tweetFinal = re.sub("[^a-zA-Z ]", "", stripTweet)
         score = str(sentTweetWords_final_score(tweetFinal))
-        print(stripTweet.replace("\n", "") + "|||" + score)
+        t[tweetFinal] = score
+        #print(stripTweet.replace("\n", "") + "|||" + score)
+
+    print("***************************************")
+
+    print("Most Positive Tweet: ", getMostPos(**t))
+    print("Most Negative Tweet: ", getMostNeg(**t))
+    print("Average Sentiment: ", getAveScore(**t))
 
     con.close()
 

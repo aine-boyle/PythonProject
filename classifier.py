@@ -166,6 +166,10 @@ def getAveScore(**t):
 def main():
 #Get Tweets from DB
 
+    n = str(100)
+
+    f = open('output.txt', 'w')
+
     t = {};
 
     con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
@@ -173,7 +177,8 @@ def main():
 
     cur = con.cursor()
 
-    cur.execute("SELECT * FROM twitter_data")
+    sqlcommand = ("SELECT TOP " + n + " * FROM twitter_data")
+    cur.execute(sqlcommand)
 
     for row in cur.fetchall():
         tweet = row[3]
@@ -181,7 +186,8 @@ def main():
         tweetFinal = re.sub("[^a-zA-Z ]", "", stripTweet)
         score = str(sentTweetWords_final_score(tweetFinal))
         t[tweetFinal] = score
-        #print(stripTweet.replace("\n", "") + "|||" + score)
+        output = (tweetFinal + " ||| " + str(score) + "\n")
+        f.write(output)
 
     print("***************************************")
 
@@ -189,6 +195,7 @@ def main():
     print("Most Negative Tweet: ", getMostNeg(**t))
     print("Average Sentiment: ", getAveScore(**t))
 
+    f.close()
     con.close()
 
 if __name__ == '__main__':

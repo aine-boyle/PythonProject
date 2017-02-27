@@ -1,12 +1,19 @@
 import sys, getopt , csv, re
 
+from gensim.models import word2vec
 from nltk.corpus import wordnet as wordnet
 from nltk.corpus import sentiwordnet as swn
 
-import gensim
+from tweepy.streaming import StreamListener
+from tweepy import OAuthHandler
+from tweepy import Stream
+
+import argparse
 import nltk
 import math
+import operator
 import pyodbc
+import twitterStream
 
 from nltk.tag.perceptron import PerceptronTagger
 tagger = PerceptronTagger()
@@ -135,65 +142,98 @@ def sentTweetWords_final_score(text):
         score = sentence_score(sentence)
     return 1 / (1 + math.exp(-score))
 
-def getMostPos(**t) :
-    max = 0.00
-    tweet = ""
-    for key in t:
-        if(float(t[key]) > max) :
-            max = float(t[key])
-            tweet = key
-    return tweet
+def getMostPos(n, sorted_tweets) :
+    print("Most Positive ", n, " Tweets: ")
+    if len(sorted_tweets) <= n :
+        for tweet in sorted_tweets :
+            print(tweet)
+    else:
+        for tweet in range(0, n) :
+            print(sorted_tweets[tweet])
 
-def getMostNeg(**t):
-    min = 1.00
-    tweet = ""
-    for key in t:
-        if (float(t[key]) < min):
-            min = float(t[key])
-            tweet = key
-    return tweet
+def getMostNeg(n, sorted_tweets):
+    print("Most Negative ", n, " Tweets: ")
+    if len(sorted_tweets) <= n :
+        for tweet in sorted_tweets :
+            print(tweet)
+    else:
+        for tweet in range(0, n) :
+            print(sorted_tweets[tweet])
 
-def getAveScore(**t):
-    count = 0
-    total = 0.00
+def getTweetsAboveThr(a_t, **t) :
+    print("Tweets above ", a_t)
     for key in t:
-        count = count + 1
-        score = float(t[key])
-        total = total + score
-    average = total / count
-    return average
+        if (float(t[key]) > a_t):
+            tweet = key
+            print(tweet, " : ", t[key])
+    print("******************************")
+
+def getTweetsBelowThr(b_t, **t):
+    print("Tweets below ", b_t)
+    for key in t:
+        if (float(t[key]) < b_t):
+            tweet = key
+            print(tweet, " : ", t[key])
+    print("******************************")
 
 def main():
-#Get Tweets from DB
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--k', help='Keyword', type=str, required = True)
+    parser.add_argument('--n', help='Print top & bottom n tweets', default = 20, type = int)
+    parser.add_argument('--a_t', help='Print tweets above a_t', default = 0.80, type = float)
+    parser.add_argument('--b_t', help='Print tweets below b_t', default = 0.20, type = float)
 
-    n = str(100)
+    args = parser.parse_args()
+
+    streamer = twitterStream.TwitterStreamer()
+    auth = OAuthHandler(twitterStream.consumer_key, twitterStream.consumer_secret)
+    auth.set_access_token(twitterStream.access_token, twitterStream.access_token_secret)
+    stream = Stream(auth, listener=twitterStream.TwitterStreamer(time_limit=20))
+
+    stream.filter(track=[args.k])
+
+    num = str(100)
 
     f = open('output.txt', 'w')
 
     t = {};
 
-    con = pyodbc.connect(Trusted_Connection='yes', driver = '{SQL Server}',server = 'GANESHA\SQLEXPRESS' , database = '4YP')
+    # Get Tweets from DB
+    model = word2vec.Word2Vec.load('MyModel')
+    keywords = model.most_similar(args.k)
+    keyword_list = [word[0] for word in keywords]
+    keyword_list.append(args.k)
+
+    con = twitterStream.TwitterStreamer.con
     print("Connected")
 
     cur = con.cursor()
 
-    sqlcommand = ("SELECT TOP " + n + " * FROM twitter_data")
+    sqlcommand = ("SELECT TOP " + num + " * FROM python_twitter_data")
     cur.execute(sqlcommand)
 
     for row in cur.fetchall():
-        tweet = row[3]
-        stripTweet = tweet.strip()
-        tweetFinal = re.sub("[^a-zA-Z ]", "", stripTweet)
-        score = str(sentTweetWords_final_score(tweetFinal))
-        t[tweetFinal] = score
-        output = (tweetFinal + " ||| " + str(score) + "\n")
-        f.write(output)
+        tweet = row[2]
+        if any(x in tweet for x in keyword_list):
+            stripTweet = tweet.strip()
+            tweetFinal = re.sub("[^a-zA-Z ]", "", stripTweet)
+            score = str(sentTweetWords_final_score(tweetFinal))
+            t[tweetFinal] = score
+            output = (tweetFinal + " ||| " + str(score) + "\n")
+            f.write(output)
 
-    print("***************************************")
+    # Print tweets above a_t
+    getTweetsAboveThr(args.a_t, **t)
 
-    print("Most Positive Tweet: ", getMostPos(**t))
-    print("Most Negative Tweet: ", getMostNeg(**t))
-    print("Average Sentiment: ", getAveScore(**t))
+    # Print tweets below b_t
+    getTweetsBelowThr(args.b_t, **t)
+
+    # Print top n & bottom n tweets
+    sorted_tweets = sorted(t.items(), key=operator.itemgetter(1))
+    getMostNeg(args.n, sorted_tweets)
+
+    reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
+    getMostPos(args.n, reverse_tweets)
 
     f.close()
     con.close()

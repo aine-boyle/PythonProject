@@ -178,7 +178,7 @@ def getTweetsBelowThr(b_t, **t):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--k', help='Keyword', type=str, required = True)
+    parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
     parser.add_argument('--n', help='Print top & bottom n tweets', default = 20, type = int)
     parser.add_argument('--a_t', help='Print tweets above a_t', default = 0.80, type = float)
     parser.add_argument('--b_t', help='Print tweets below b_t', default = 0.20, type = float)
@@ -190,7 +190,9 @@ def main():
     auth.set_access_token(twitterStream.access_token, twitterStream.access_token_secret)
     stream = Stream(auth, listener=twitterStream.TwitterStreamer(time_limit=20))
 
-    stream.filter(track=[args.k])
+    for k in args.k :
+        print(k)
+    stream.filter(track=[args.k[0]])
 
     num = str(100)
 

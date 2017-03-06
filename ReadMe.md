@@ -19,3 +19,15 @@ Printed:
 	****************
 	Most negative n tweets
 	Most positive n tweets
+
+Required Libraries:
+    argparse
+    bs4
+    gensim
+    html.parser
+    math
+    nltk
+    operator
+    pyodbc
+    tweepy
+    twitterStream

@@ -190,7 +190,7 @@ def main():
     auth.set_access_token(twitterStream.access_token, twitterStream.access_token_secret)
     stream = Stream(auth, listener=twitterStream.TwitterStreamer(time_limit=20))
 
-    num = str(100)
+    num = str(500)
 
     f = open('output.txt', 'w')
 

@@ -190,21 +190,26 @@ def main():
     auth.set_access_token(twitterStream.access_token, twitterStream.access_token_secret)
     stream = Stream(auth, listener=twitterStream.TwitterStreamer(time_limit=20))
 
-    for k in args.k :
-        print(k)
-    stream.filter(track=[args.k[0]])
-
     num = str(100)
 
     f = open('output.txt', 'w')
 
     t = {};
+    keyword_list = []
 
     # Get Tweets from DB
     model = word2vec.Word2Vec.load('MyModel')
-    keywords = model.most_similar(args.k)
-    keyword_list = [word[0] for word in keywords]
-    keyword_list.append(args.k)
+    for k in args.k :
+        keyword_list.append(k)
+        if k in model.vocab:
+            keywords = model.most_similar(k)
+            for k in keywords :
+                keyword_list.append(k[0])
+
+    for k in keyword_list :
+        print(k)
+
+    stream.filter(track=keyword_list)
 
     con = twitterStream.TwitterStreamer.con
     print("Connected")

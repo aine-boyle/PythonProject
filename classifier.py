@@ -9,6 +9,8 @@ from tweepy import OAuthHandler
 from tweepy import Stream
 
 import argparse
+import csv
+import json
 import nltk
 import math
 import operator
@@ -192,12 +194,10 @@ def main():
 
     num = str(500)
 
-    f = open('output.txt', 'w')
-
     t = {};
     keyword_list = []
 
-    # Get Tweets from DB
+    # Get model & keywords
     model = word2vec.Word2Vec.load('MyModel')
     for k in args.k :
         keyword_list.append(k)
@@ -206,28 +206,16 @@ def main():
             for k in keywords :
                 keyword_list.append(k[0])
 
-    for k in keyword_list :
-        print(k)
-
     stream.filter(track=keyword_list)
 
-    con = twitterStream.TwitterStreamer.con
-    print("Connected")
-
-    cur = con.cursor()
-
-    sqlcommand = ("SELECT TOP " + num + " * FROM python_twitter_data")
-    cur.execute(sqlcommand)
-
-    for row in cur.fetchall():
-        tweet = row[2]
-        if any(x in tweet for x in keyword_list):
-            stripTweet = tweet.strip()
-            tweetFinal = re.sub("[^a-zA-Z ]", "", stripTweet)
-            score = str(sentTweetWords_final_score(tweetFinal))
-            t[tweetFinal] = score
-            output = (tweetFinal + " ||| " + str(score) + "\n")
-            f.write(output)
+    f = open("tweets.csv", 'rt')  # opens file for reading
+    reader = csv.reader(f)
+    for row in reader:
+        if(row[3]) :
+            tweet = row[3]
+            tweet = tweet.replace("\n", " ")
+            score = str(sentTweetWords_final_score(tweet))
+            t[tweet] = score
 
     # Print tweets above a_t
     getTweetsAboveThr(args.a_t, **t)
@@ -241,9 +229,6 @@ def main():
 
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
     getMostPos(args.n, reverse_tweets)
-
-    f.close()
-    con.close()
 
 if __name__ == '__main__':
     main()

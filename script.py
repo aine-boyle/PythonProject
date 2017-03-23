@@ -1,25 +1,19 @@
-import sys, getopt , csv, re
-
-
-#from gensim.models import word2vec
-from nltk.corpus import wordnet as wordnet
-from nltk.corpus import sentiwordnet as swn
-from tweepy.streaming import StreamListener
-from tweepy import OAuthHandler
-from tweepy import Stream
-
 import argparse
 import csv
 import gensim
-import json
-import nltk
 import math
+import nltk
 import operator
-import pattern
-import twitterStream
+import strcleaner
 
+from nltk.corpus import wordnet as wordnet
+from nltk.corpus import sentiwordnet as swn
 from nltk.tag.perceptron import PerceptronTagger
 tagger = PerceptronTagger()
+
+import pattern.en
+from pattern.web    import Twitter
+from pattern.vector import KNN, count
 
 def loadDictionary():
 
@@ -179,6 +173,7 @@ def getTweetsBelowThr(b_t, **t):
             print(tweet, " : ", t[key])
     print("******************************")
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
@@ -188,12 +183,8 @@ def main():
 
     args = parser.parse_args()
 
-    streamer = twitterStream.TwitterStreamer()
-    auth = OAuthHandler(twitterStream.consumer_key, twitterStream.consumer_secret)
-    auth.set_access_token(twitterStream.access_token, twitterStream.access_token_secret)
-    stream = Stream(auth, listener=twitterStream.TwitterStreamer(time_limit=20))
-
     num = str(500)
+    twitter, knn = Twitter(), KNN()
 
     t = {};
     keyword_list = []
@@ -207,7 +198,28 @@ def main():
             for k in keywords :
                 keyword_list.append(k[0])
 
-    stream.filter(track=keyword_list)
+    for i in range(1, 3):
+        for tweet in twitter.search(k[0], start=i, count=100):
+            if tweet.language == "en" :
+                text = tweet.text.lower()
+                _tweet = strcleaner.clean(text)
+                p = k[0] in tweet and 'positive' or 'negative'
+                v = pattern.en.tag(_tweet)
+                v = [word for word, pos in v if pos == 'JJ']  # JJ = adjective
+                v = count(v)  # {'sweet': 1}
+                if v:
+                    knn.train(v, type=p)
+
+                with open('tweets.csv', 'a') as csvfile:
+                    writer = csv.writer(csvfile, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    if not tweet.location :
+                        location = "none"
+                    else :
+                        location = tweet.location
+                       # print(location)
+
+                    writer.writerow([tweet.id, tweet.author, location, _tweet])
 
     f = open("tweets.csv", 'rt')  # opens file for reading
     reader = csv.reader(f)
@@ -216,15 +228,6 @@ def main():
             tweet = row[3]
             tweet = tweet.replace("\n", " ")
             score = str(sentTweetWords_final_score(tweet))
-      #      v = pattern.en.tag(tweet)
-       #     v = [word for word, pos in v if pos == 'JJ']  # JJ = adjective
-        #    v = pattern.vector.count(v)  # {'sweet': 1}
-#            if score > 0.5 :
-#                p = "positive"
-#            else :
-#                p = "negative"
-        #    if v:
-         #       pattern.knn.train(v, type=score)
             t[tweet] = score
 
     # Print tweets above a_t

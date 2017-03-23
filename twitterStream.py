@@ -6,7 +6,7 @@ import time
 import re
 import strcleaner
 
-from html.parser import HTMLParser
+import HTMLParser
 
 access_token = "265437614-dFepW5aHu0imZbBA3mbgGJkzrzTxqg2D8mZARRZY"
 access_token_secret = "KKfLtjovox3OJc1jNhBMNj8NEpPWtHee8XOxXcJkN1bHV"

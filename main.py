@@ -173,6 +173,18 @@ def getTweetsBelowThr(b_t, **t):
             print(tweet, " : ", t[key])
     print("******************************")
 
+def classify(score) :
+    roundedscore = round(score,2)
+    if(roundedscore <= 0.30) :
+        return "very negative"
+    elif(roundedscore < 0.50) :
+        return "negative"
+    elif(roundedscore >= 0.70) :
+        return "very positive"
+    elif(roundedscore > 0.55) :
+        return "positive"
+    else :
+        return "neutral"
 
 def main():
     parser = argparse.ArgumentParser()
@@ -201,7 +213,6 @@ def main():
     for i in range(1, 3):
         for tweet in twitter.search(k[0], start=i, count=100):
             if tweet.language == "en" :
-                print(tweet)
                 text = tweet.text.lower()
                 _tweet = strcleaner.clean(text)
                 p = k[0] in tweet and 'positive' or 'negative'
@@ -210,7 +221,9 @@ def main():
                 v = count(v)  # {'sweet': 1}
                 if v:
                     knn.train(v, type=p)
-
+                _tweet = _tweet.replace("\n", " ")
+                score = str(sentTweetWords_final_score(_tweet))
+                t[_tweet] = score
                 with open('tweets.csv', 'a') as csvfile:
                     writer = csv.writer(csvfile, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -218,18 +231,8 @@ def main():
                         location = "none"
                     else :
                         location = tweet.location
-                       # print(location)
-
-                    writer.writerow([tweet.id, tweet.author, location, _tweet])
-
-    f = open("tweets.csv", 'rt')  # opens file for reading
-    reader = csv.reader(f)
-    for row in reader:
-        if(row[3]) :
-            tweet = row[3]
-            tweet = tweet.replace("\n", " ")
-            score = str(sentTweetWords_final_score(tweet))
-            t[tweet] = score
+                    classification = classify(float(score))
+                    writer.writerow([tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
 
     # Print tweets above a_t
     getTweetsAboveThr(args.a_t, **t)

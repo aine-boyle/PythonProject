@@ -1,0 +1,31 @@
+body {
+	background-color: #F5F5F5
+}
+
+div.donut {
+	padding-top: 2em;
+  	margin-top: 70px;
+}
+
+div.bar {
+  	padding-top: 2em;
+  	margin-top: 70px;
+}
+
+div.map {
+	background-color:#F5F5F5;
+  	padding-top: 2em;
+  	margin-top: 70px;
+}
+
+div.neg {
+  	padding-top: 2em;
+   	font-family: courier;
+  	margin-top: 70px;
+}
+
+div.pos {
+  	padding-top: 2em;
+  	font-family: courier;
+  	margin-top: 70px;
+}

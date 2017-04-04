@@ -6,6 +6,8 @@ import nltk
 import operator
 import strcleaner
 
+from flask import Flask, request, render_template
+
 from nltk.corpus import wordnet as wordnet
 from nltk.corpus import sentiwordnet as swn
 from nltk.tag.perceptron import PerceptronTagger
@@ -186,7 +188,20 @@ def classify(score) :
     else :
         return "neutral"
 
+app = Flask(__name__)
+
+@app.route('/')
+def submit():
+    print(render_template("search.html"))
+    return render_template("search.html")
+
+@app.route('/', methods=['POST'])
 def main():
+    text = request.form['search']
+    processed_text = text.upper()
+
+    print(processed_text)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
     parser.add_argument('--n', help='Print top & bottom n tweets', default = 20, type = int)
@@ -248,4 +263,4 @@ def main():
     getMostPos(args.n, reverse_tweets)
 
 if __name__ == '__main__':
-    main()
+    app.run()

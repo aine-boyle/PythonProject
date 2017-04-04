@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<link rel="stylesheet" type="text/css" href="../static/main_style.css"/>
+	
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+		<script src="http://cdn.oesmith.co.uk/morris-0.4.1.min.js"></script>
+		
+		<!--MAP-->
+		
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    	<script type="text/javascript">
+      		google.charts.load('current', {'packages':['geochart']});
+      		google.charts.setOnLoadCallback(drawRegionsMap);
+
+      		function drawRegionsMap() {
+
+	        	var data = google.visualization.arrayToDataTable([
+	          		['Country', 'Sentiment'],
+	          		['Germany', 0.50],
+	          		['United States', 0.30],
+	          		['Brazil', 0.20],
+	          		['Canada', 0.30],
+	          		['France', 0.40],
+	          		['RU', 0.9]
+	        	]);
+	
+	        	var options = {
+	        		backgroundColor: '#FFFFFF',
+	        		colorAxis: {
+	        			colors:['red','#ff0000', 'red', '#FF3333', 'purple', '#9900FF', 'blue', '#6600FF', 'blue', '#3300FF']
+	        		}
+	        		
+	        	};
+	
+	        	var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+	
+	        	chart.draw(data, options);
+      	}
+      	
+    	</script>
+	</head>
+	
+	<body background = "static/topography.png">
+	
+	<h1 style="float:inherit; text-align: center"> Keyword </h1>
+	
+	<div class="donut"; style="float:left; width:50%;">
+		<div id="donut-chart"></div>	
+		<script src="../static/donutchart.js"></script>
+	</div>
+	
+	<div class="bar"; style="float:left; width:50%;">
+		<div id="bar-chart"></div>
+		<script src="../static/barchart.js"></script>
+	</div>
+	
+	<div class="pos"; style="float:left; width:50%; text-align: center;">
+		<ol> Top N Positive Tweets:
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+		</ol>
+	</div>
+	
+	<div class="neg"; style="float:left; width:50%; text-align: center;">
+		<ol> Top N Negative Tweets:
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+		</ol>
+	</div>
+	
+	<div class="map"; style="float:left; width:100%;">
+		<div id="regions_div" style="width: 1000px; height: 400px;"></div>
+	</div>
+	
+	</body>
+</html>

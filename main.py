@@ -145,28 +145,25 @@ def sentTweetWords_final_score(text):
 
 def getMostPos(n, sorted_tweets) :
     pos_list = []
-    new_pos_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
-            pos_list.append(tweet)
+            pos_list.append(tweet[0])
     else:
         for tweet in range(0, n) :
-            pos_list.append(sorted_tweets[tweet])
-    for key in pos_list:
-        print(key)
-        new_pos_list.append(key)
-    return new_pos_list
+            tweettuple = sorted_tweets[tweet]
+            pos_list.append(tweettuple[0])
+
+    return pos_list
 
 def getMostNeg(n, sorted_tweets):
     neg_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
-            print(tweet)
-            print(tweet[0])
-            neg_list.append(tweet)
+            neg_list.append(tweet[0])
     else:
         for tweet in range(0, n) :
-            neg_list.append(sorted_tweets[tweet])
+            tweettuple = sorted_tweets[tweet]
+            neg_list.append(tweettuple[0])
     return neg_list
 
 def getTweetsAboveThr(a_t, **t) :

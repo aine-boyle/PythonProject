@@ -195,6 +195,21 @@ def classify(score) :
     else :
         return "neutral"
 
+def getPercentages(list) :
+    totalPositive = list[0] + list[1]
+    neutral = list[2]
+    totalNegative = list[3] + list[4]
+    total = totalPositive + neutral + totalNegative
+    PosPerc = 100 * (float(totalPositive) / float(total))
+    NeutPerc = 100 * (float(neutral) / float(total))
+    NegPerc = 100 * (float(totalNegative) / float(total))
+
+    donutList = []
+    donutList.insert(0, round(PosPerc, 2))
+    donutList.insert(1, round(NeutPerc, 2))
+    donutList.insert(2, round(NegPerc, 2))
+    return donutList
+
 app = Flask(__name__)
 
 @app.route('/')
@@ -271,12 +286,14 @@ def getSentimentDistribution(t, k = None):
                     sentiments[sentiment] = 1
                 else:
                     sentiments[sentiment] += 1
-    list = []
-    list.insert(0, sentiments.get("very positive"))
-    list.insert(1, sentiments.get("positive"))
-    list.insert(2, sentiments.get("neutral"))
-    list.insert(3, sentiments.get("negative"))
-    list.insert(4, sentiments.get("very negative"))
+    bar_list = []
+    bar_list.insert(0, sentiments.get("very positive"))
+    bar_list.insert(1, sentiments.get("positive"))
+    bar_list.insert(2, sentiments.get("neutral"))
+    bar_list.insert(3, sentiments.get("negative"))
+    bar_list.insert(4, sentiments.get("very negative"))
+
+    donut_list = getPercentages(bar_list)
 
     sorted_tweets = sorted(t.items(), key=operator.itemgetter(1))
     neg_list = getMostNeg(6, sorted_tweets)
@@ -284,7 +301,7 @@ def getSentimentDistribution(t, k = None):
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
     pos_list = getMostPos(6, reverse_tweets)
 
-    return (render_template("main.html", my_list = list, k = k, neg_list = neg_list, pos_list = pos_list))
+    return (render_template("main.html", bar_list = bar_list, donut_list = donut_list, k = k, neg_list = neg_list, pos_list = pos_list))
 
 #       Print tweets above a_t
 #       getTweetsAboveThr(args.a_t, **t)

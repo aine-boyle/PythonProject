@@ -54,15 +54,15 @@
 	<div class="donut"; style="float:left; width:50%;">
 		<div id="donut-chart"></div>	
 		<script>
-			var donut_list = JSON.parse('{{my_list | safe}}')
+			var donut_list = JSON.parse('{{donut_list | safe}}')
 			Morris.Donut({
 				element: 'donut-chart',
 				colors: ["#3c8dbc", "#bf00ff", "#ff3333"],
 
 				data: [
-					{label: "Positive", value: donut_list[0] + donut_list[1]},
-					{label: "Neutral", value: donut_list[2]},
-					{label: "Negative", value: donut_list[3] + donut_list[4]}
+					{label: "Positive", value: donut_list[0]},
+					{label: "Neutral", value: donut_list[1]},
+					{label: "Negative", value: donut_list[2]}
 				]
 			});
 		</script>
@@ -71,7 +71,7 @@
 	<div class="bar"; style="float:left; width:50%;">
 		<div id="bar-chart"></div>
 		<script>
-			var bar_list = JSON.parse('{{my_list | safe}}')
+			var bar_list = JSON.parse('{{bar_list | safe}}')
 			Morris.Bar({
 				element: 'bar-chart',
 				data: [

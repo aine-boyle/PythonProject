@@ -1,12 +1,14 @@
 import argparse
+import collections
 import csv
 import gensim
+import json
 import math
 import nltk
 import operator
 import strcleaner
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 
 from nltk.corpus import wordnet as wordnet
 from nltk.corpus import sentiwordnet as swn
@@ -142,38 +144,46 @@ def sentTweetWords_final_score(text):
     return 1 / (1 + math.exp(-score))
 
 def getMostPos(n, sorted_tweets) :
-    print("Most Positive ", n, " Tweets: ")
+    pos_list = []
+    new_pos_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
-            print(tweet)
+            pos_list.append(tweet)
     else:
         for tweet in range(0, n) :
-            print(sorted_tweets[tweet])
+            pos_list.append(sorted_tweets[tweet])
+    for key in pos_list:
+        print(key)
+        new_pos_list.append(key)
+    return new_pos_list
 
 def getMostNeg(n, sorted_tweets):
-    print("Most Negative ", n, " Tweets: ")
+    neg_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
             print(tweet)
+            print(tweet[0])
+            neg_list.append(tweet)
     else:
         for tweet in range(0, n) :
-            print(sorted_tweets[tweet])
+            neg_list.append(sorted_tweets[tweet])
+    return neg_list
 
 def getTweetsAboveThr(a_t, **t) :
-    print("Tweets above ", a_t)
+    list_at = []
     for key in t:
         if (float(t[key]) > a_t):
             tweet = key
-            print(tweet, " : ", t[key])
-    print("******************************")
+            list_at.append(tweet)
+    return list_at
 
 def getTweetsBelowThr(b_t, **t):
-    print("Tweets below ", b_t)
+    list_bt = []
     for key in t:
         if (float(t[key]) < b_t):
             tweet = key
-            print(tweet, " : ", t[key])
-    print("******************************")
+            list_bt.append(tweet)
+    return list_bt
 
 def classify(score) :
     roundedscore = round(score,2)
@@ -192,18 +202,15 @@ app = Flask(__name__)
 
 @app.route('/')
 def submit():
-    print(render_template("search.html"))
     return render_template("search.html")
 
-@app.route('/', methods=['POST'])
-def main():
-    text = request.form['search']
-    processed_text = text.upper()
-
-    print(processed_text)
+@app.route('/')
+@app.route('/<k>/', methods=['POST'])
+def main(k=None):
+    k = request.form['search']
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
+    #parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
     parser.add_argument('--n', help='Print top & bottom n tweets', default = 20, type = int)
     parser.add_argument('--a_t', help='Print tweets above a_t', default = 0.80, type = float)
     parser.add_argument('--b_t', help='Print tweets below b_t', default = 0.20, type = float)
@@ -218,12 +225,12 @@ def main():
 
     # Get model & keywords
     model = gensim.models.word2vec.Word2Vec.load('MyModel')
-    for k in args.k :
-        keyword_list.append(k)
-        if k in model.vocab:
-            keywords = model.most_similar(k)
-            for k in keywords :
-                keyword_list.append(k[0])
+    #for k in args.k :
+    #    keyword_list.append(k)
+    if k in model.vocab:
+        keywords = model.most_similar(k)
+        for k in keywords :
+            keyword_list.append(k[0])
 
     for i in range(1, 3):
         for tweet in twitter.search(k[0], start=i, count=100):
@@ -249,18 +256,44 @@ def main():
                     classification = classify(float(score))
                     writer.writerow([tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
 
-    # Print tweets above a_t
-    getTweetsAboveThr(args.a_t, **t)
+    return (getSentimentDistribution(t, k))
 
-    # Print tweets below b_t
-    getTweetsBelowThr(args.b_t, **t)
+@app.route('/')
+@app.route('/<k>/', methods=['POST'])
+def getSentimentDistribution(t, k = None):
+    k = request.form['search']
+    print(k)
 
-    # Print top n & bottom n tweets
+    sentiments = {}
+    with open("tweets.csv", "rb") as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if(k in row[4]) :
+                sentiment = row[7]
+                if not sentiment in sentiments:
+                    sentiments[sentiment] = 1
+                else:
+                    sentiments[sentiment] += 1
+    list = []
+    list.insert(0, sentiments.get("very positive"))
+    list.insert(1, sentiments.get("positive"))
+    list.insert(2, sentiments.get("neutral"))
+    list.insert(3, sentiments.get("negative"))
+    list.insert(4, sentiments.get("very negative"))
+
     sorted_tweets = sorted(t.items(), key=operator.itemgetter(1))
-    getMostNeg(args.n, sorted_tweets)
+    neg_list = getMostNeg(5, sorted_tweets)
 
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
-    getMostPos(args.n, reverse_tweets)
+    pos_list = getMostPos(5, reverse_tweets)
+
+    return (render_template("main.html", my_list = list, k = k, neg_list = neg_list, pos_list = pos_list))
+
+#       Print tweets above a_t
+#       getTweetsAboveThr(args.a_t, **t)
+
+#       Print tweets below b_t
+#       getTweetsBelowThr(args.b_t, **t)
 
 if __name__ == '__main__':
     app.run()

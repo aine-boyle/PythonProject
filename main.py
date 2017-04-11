@@ -222,8 +222,7 @@ def main(k=None):
 
     # Get model & keywords
     model = gensim.models.word2vec.Word2Vec.load('MyModel')
-    #for k in args.k :
-    #    keyword_list.append(k)
+
     if k in model.vocab:
         keywords = model.most_similar(k)
         for k in keywords :
@@ -250,6 +249,7 @@ def main(k=None):
                         location = "none"
                     else :
                         location = tweet.location
+                        print(location)
                     classification = classify(float(score))
                     writer.writerow([tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
 
@@ -279,10 +279,10 @@ def getSentimentDistribution(t, k = None):
     list.insert(4, sentiments.get("very negative"))
 
     sorted_tweets = sorted(t.items(), key=operator.itemgetter(1))
-    neg_list = getMostNeg(5, sorted_tweets)
+    neg_list = getMostNeg(6, sorted_tweets)
 
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
-    pos_list = getMostPos(5, reverse_tweets)
+    pos_list = getMostPos(6, reverse_tweets)
 
     return (render_template("main.html", my_list = list, k = k, neg_list = neg_list, pos_list = pos_list))
 

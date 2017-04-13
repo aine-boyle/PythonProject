@@ -34,13 +34,52 @@
 .container input#search:-moz-placeholder { /* Firefox 18- */
    	color: #65737e;  
 }
- 
+
+.container.advancedOptions.
+
 .container input#search::-moz-placeholder {  /* Firefox 19+ */
    	color: #65737e;  
 }
  
 .container input#search:-ms-input-placeholder {  
    	color: #65737e;  
+}
+
+.container.advancedOptions{
+  overflow: hidden;
+  width: 300px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.container.advancedOptions input#text{
+  width: 300px;
+  height: 50px;
+  background: #2b303b;
+  border: none;
+  font-size: 10pt;
+  float: left;
+  color: #fff;
+  padding-left: 15px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.container.advancedOptions input#text::-webkit-input-placeholder {
+   color: #65737e;
+}
+
+.container.advancedOptions input#text:-moz-placeholder { /* Firefox 18- */
+   color: #65737e;
+}
+
+.container.advancedOptions input#text::-moz-placeholder {  /* Firefox 19+ */
+   color: #65737e;
+}
+
+.container.advancedOptions input#text:-ms-input-placeholder {
+   color: #65737e;
 }
 
 .container button.icon{
@@ -75,4 +114,13 @@
  
 .container:hover button.icon:hover{
     background: white;
+}
+
+.newcontainer{
+    margin-top:30px;
+}
+
+.filter-col{
+    padding-left:10px;
+    padding-right:10px;
 }

@@ -144,6 +144,7 @@ def sentTweetWords_final_score(text):
     return 1 / (1 + math.exp(-score))
 
 def getMostPos(n, sorted_tweets) :
+    print("pos ", n, " slist ", len(sorted_tweets))
     pos_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
@@ -156,6 +157,7 @@ def getMostPos(n, sorted_tweets) :
     return pos_list
 
 def getMostNeg(n, sorted_tweets):
+    print("neg ", n, " slist ", len(sorted_tweets))
     neg_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
@@ -218,7 +220,7 @@ def submit():
 
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
-def main(k=None):
+def main(k=None, n=None):
     k = request.form['search']
 
     parser = argparse.ArgumentParser()
@@ -267,14 +269,22 @@ def main(k=None):
                         print(location)
                     classification = classify(float(score))
                     writer.writerow([tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
-
-    return (getSentimentDistribution(t, k))
+    return (getSentimentDistribution(t, k, n))
 
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
-def getSentimentDistribution(t, k = None):
+def getSentimentDistribution(t, n = None, k = None):
     k = request.form['search']
-    print(k)
+
+    str2num = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7":7, "8":8, "9":9, "10":10,
+               "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19, "20": 20}
+
+    n = request.form['text']
+
+    if n:
+        n = str2num[request.form['text']]
+    else :
+        n = 10
 
     sentiments = {}
     with open("tweets.csv", "rb") as csvfile:
@@ -296,12 +306,12 @@ def getSentimentDistribution(t, k = None):
     donut_list = getPercentages(bar_list)
 
     sorted_tweets = sorted(t.items(), key=operator.itemgetter(1))
-    neg_list = getMostNeg(6, sorted_tweets)
+    neg_list = getMostNeg(n, sorted_tweets)
 
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
-    pos_list = getMostPos(6, reverse_tweets)
+    pos_list = getMostPos(n, reverse_tweets)
 
-    return (render_template("main.html", bar_list = bar_list, donut_list = donut_list, k = k, neg_list = neg_list, pos_list = pos_list))
+    return (render_template("main.html", bar_list = bar_list, donut_list = donut_list, k = k, neg_list = neg_list, pos_list = pos_list, n=n))
 
 #       Print tweets above a_t
 #       getTweetsAboveThr(args.a_t, **t)

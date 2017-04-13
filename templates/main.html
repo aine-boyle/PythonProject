@@ -6,39 +6,6 @@
 		<script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
 		<script src="http://cdn.oesmith.co.uk/morris-0.4.1.min.js"></script>
-
-		<!--MAP-->
-		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    	<script type="text/javascript">
-      		google.charts.load('current', {'packages':['geochart']});
-      		google.charts.setOnLoadCallback(drawRegionsMap);
-
-      		function drawRegionsMap() {
-
-	        	var data = google.visualization.arrayToDataTable([
-	          		['Country', 'Sentiment'],
-	          		['Germany', 0.50],
-	          		['United States', 0.30],
-	          		['Brazil', 0.20],
-	          		['Canada', 0.30],
-	          		['France', 0.40],
-	          		['RU', 0.9]
-	        	]);
-	
-	        	var options = {
-	        		backgroundColor: '#FFFFFF',
-	        		colorAxis: {
-	        			colors:['red','#ff0000', 'red', '#FF3333', 'purple', '#9900FF', 'blue', '#6600FF', 'blue', '#3300FF']
-	        		}
-	        		
-	        	};
-	
-	        	var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
-	
-	        	chart.draw(data, options);
-      	}
-      	
-    	</script>
 	</head>
 	
 	<body background = "static/topography.png">
@@ -49,83 +16,78 @@
   		<h1 style="float:inherit; text-align: center"> null </h1>
 	{% endif %}
 
-	<div class="donut"; style="float:left; width:50%;">
-		<div id="donut-chart"></div>	
-		<script>
-			var donut_list = JSON.parse('{{donut_list | safe}}')
-			Morris.Donut({
-				element: 'donut-chart',
-				colors: ["#3c8dbc", "#bf00ff", "#ff3333"],
+		<div class="donut"; style="float:left; width:50%;">
+			<div id="donut-chart"></div>
+			<script>
+				var donut_list = JSON.parse('{{donut_list | safe}}')
+				Morris.Donut({
+					element: 'donut-chart',
+					colors: ["#3c8dbc", "#bf00ff", "#ff3333"],
 
-				data: [
-					{label: "Positive", value: donut_list[0]},
-					{label: "Neutral", value: donut_list[1]},
-					{label: "Negative", value: donut_list[2]}
-				]
-			});
-		</script>
-	</div>
-	
-	<div class="bar"; style="float:left; width:50%;">
-		<div id="bar-chart"></div>
-		<script>
-			var bar_list = JSON.parse('{{bar_list | safe}}')
-			Morris.Bar({
-				element: 'bar-chart',
-				data: [
-				    { x: 'V. Pos', y : bar_list[0]},
-					{ x: 'Pos', y: bar_list[1]},
-					{ x: 'Neutral', y: bar_list[2]},
-					{ x: 'Neg', y: bar_list[3]},
-					{ x: 'V.Neg', y: bar_list[4]},
-				],
+					data: [
+						{label: "Positive", value: donut_list[0]},
+						{label: "Neutral", value: donut_list[1]},
+						{label: "Negative", value: donut_list[2]}
+					]
+				});
+			</script>
+		</div>
 
-				xkey: 'x',
-				ykeys: ['y'],
-				labels: ['# Tweets'],
-				barColors: function (row, series, type) {
-					console.log("--> "+row.label, series, type);
-					if(row.label == "V. Pos") return "#3300FF";
-					else if(row.label == "Pos") return "#6600FF";
-					else if(row.label == "Neutral") return "#9900FF";
-					else if(row.label == "Neg") return "#FF3333";
-					else return "#ff0000";
-				}
-			});
-		</script>
-	</div>
+		<div class="bar"; style="float:left; width:50%;">
+			<div id="bar-chart"></div>
+			<script>
+				var bar_list = JSON.parse('{{bar_list | safe}}')
+				Morris.Bar({
+					element: 'bar-chart',
+					data: [
+						{ x: 'V. Pos', y : bar_list[0]},
+						{ x: 'Pos', y: bar_list[1]},
+						{ x: 'Neutral', y: bar_list[2]},
+						{ x: 'Neg', y: bar_list[3]},
+						{ x: 'V.Neg', y: bar_list[4]},
+					],
 
-	<div class="pos"; style="float:left; width:50%; text-align: center;">
-		<ol>
-		{% if n %}
-		 	Top {{n}} Positive Tweets:
-		{% else %}
-			Top 10 Positive Tweets:
-		{% endif %}
-			<br>
-			{% for tweet in pos_list %}
-				<li>{{tweet}}</li>
-			{% endfor %}
-		</ol>
-	</div>
-	
-	<div class="neg"; style="float:left; width:50%; text-align: center;">
-		<ol>
-		{% if n %}
-		 	Top {{n}} Negative Tweets:
-		{% else %}
-			Top 10 Negative Tweets:
-		{% endif %}
-			<br>
-			{% for tweet in neg_list %}
-				<li>{{tweet}}</li>
-			{% endfor %}
-		</ol>
-	</div>
-	
-	<div class="map"; style="float:left; width:100%;">
-		<div id="regions_div" style="width: 100%; height: 400px;"></div>
-	</div>
-	
+					xkey: 'x',
+					ykeys: ['y'],
+					labels: ['# Tweets'],
+					barColors: function (row, series, type) {
+						console.log("--> "+row.label, series, type);
+						if(row.label == "V. Pos") return "#3300FF";
+						else if(row.label == "Pos") return "#6600FF";
+						else if(row.label == "Neutral") return "#9900FF";
+						else if(row.label == "Neg") return "#FF3333";
+						else return "#ff0000";
+					}
+				});
+			</script>
+		</div>
+
+		<div class="pos"; style="float:left; width:50%; text-align: center;">
+			<ol>
+			{% if n %}
+				Top {{n}} Positive Tweets:
+			{% else %}
+				Top 10 Positive Tweets:
+			{% endif %}
+				<br>
+				{% for tweet in pos_list %}
+					<li>{{tweet}}</li>
+				{% endfor %}
+			</ol>
+		</div>
+
+		<div class="neg"; style="float:left; width:50%; text-align: center;">
+			<ol>
+			{% if n %}
+				Top {{n}} Negative Tweets:
+			{% else %}
+				Top 10 Negative Tweets:
+			{% endif %}
+				<br>
+				{% for tweet in neg_list %}
+					<li>{{tweet}}</li>
+				{% endfor %}
+			</ol>
+		</div>
 	</body>
 </html>

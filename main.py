@@ -144,7 +144,6 @@ def sentTweetWords_final_score(text):
     return 1 / (1 + math.exp(-score))
 
 def getMostPos(n, sorted_tweets) :
-    print("pos ", n, " slist ", len(sorted_tweets))
     pos_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :
@@ -157,7 +156,6 @@ def getMostPos(n, sorted_tweets) :
     return pos_list
 
 def getMostNeg(n, sorted_tweets):
-    print("neg ", n, " slist ", len(sorted_tweets))
     neg_list = []
     if len(sorted_tweets) <= n :
         for tweet in sorted_tweets :

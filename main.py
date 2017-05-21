@@ -1,8 +1,6 @@
 import argparse
-import collections
 import csv
 import gensim
-import json
 import math
 import nltk
 import operator
@@ -195,6 +193,42 @@ def classify(score) :
     else :
         return "neutral"
 
+def classifyTweets(k, n, tweetList) :
+    print("classifying")
+    i = 0;
+    classification = "";
+    t = {}
+    knn = KNN()
+    model = knn.load("C:/Users/Aine/PycharmProjects/FinalYearProjectFolder/FinalYearProject/models/knn")
+    for tweet in tweetList:
+        print("Classifying tweet ", i, " of ", len(tweetList))
+        t = model.classify(tweet, discrete=False)
+        for _class, _probability in t.iteritems():
+            if _class == 'positive' and _probability > 0.9:
+                classification = "very positive"
+            elif _class == 'positive' and _probability > 0.7:
+                classification = "positive"
+            elif _class == 'negative' and _probability > 0.9:
+                classification = "very negative"
+            elif _class == 'negative' and _probability > 0.7:
+                classification = "negative"
+
+        if classification == "":
+            classification = "neutral"
+
+        t[tweet] = classification
+        print(tweet, ", ", classification)
+       # with open('new_tweets.csv', 'a') as csvfile:
+       #     writer = csv.writer(csvfile, delimiter=',',
+       #                         quotechar='"', quoting=csv.QUOTE_MINIMAL)
+       #     for tweet in t:
+       #         writer.writerow([tweet, classification])
+        i += 1;
+
+    print("Finished Classifying")
+    return (getSentimentDistribution(t, k, n))
+
+
 def getPercentages(list) :
     totalPositive = list[0] + list[1]
     neutral = list[2]
@@ -219,6 +253,7 @@ def submit():
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
 def main(k=None, n=None):
+    print("main")
     k = request.form['search']
 
     parser = argparse.ArgumentParser()
@@ -243,35 +278,22 @@ def main(k=None, n=None):
         for k in keywords :
             keyword_list.append(k[0])
 
+    tweetList = []
+
     for i in range(1, 3):
         for tweet in twitter.search(k[0], start=i, count=100):
             if tweet.language == "en" :
                 text = tweet.text.lower()
                 _tweet = strcleaner.clean(text)
-                p = k[0] in tweet and 'positive' or 'negative'
-                v = pattern.en.tag(_tweet)
-                v = [word for word, pos in v if pos == 'JJ']  # JJ = adjective
-                v = count(v)  # {'sweet': 1}
-                if v:
-                    knn.train(v, type=p)
                 _tweet = _tweet.replace("\n", " ")
-                score = str(sentTweetWords_final_score(_tweet))
-                t[_tweet] = score
-                with open('tweets.csv', 'a') as csvfile:
-                    writer = csv.writer(csvfile, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    if not tweet.location :
-                        location = "none"
-                    else :
-                        location = tweet.location
-                        print(location)
-                    classification = classify(float(score))
-                    writer.writerow([tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
-    return (getSentimentDistribution(t, k, n))
+                tweetList.append(_tweet)
+
+    classifyTweets(k, n, tweetList)
 
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
 def getSentimentDistribution(t, n = None, k = None):
+    print("sentiment")
     k = request.form['search']
 
     str2num = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7":7, "8":8, "9":9, "10":10,
@@ -285,15 +307,16 @@ def getSentimentDistribution(t, n = None, k = None):
         n = 10
 
     sentiments = {}
-    with open("tweets.csv", "rb") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            if(k in row[4]) :
-                sentiment = row[7]
-                if not sentiment in sentiments:
-                    sentiments[sentiment] = 1
-                else:
-                    sentiments[sentiment] += 1
+   # with open("new_tweets.csv", "rb") as csvfile:
+   #     reader = csv.reader(csvfile)
+   #     for row in reader:
+   #         if(k in row[0]) :
+   #             sentiment = row[1]
+    for tweet, sentiment in t.iteritems():
+        if not sentiment in sentiments:
+            sentiments[sentiment] = 1
+        else:
+            sentiments[sentiment] += 1
     bar_list = []
     bar_list.insert(0, sentiments.get("very positive"))
     bar_list.insert(1, sentiments.get("positive"))
@@ -310,12 +333,6 @@ def getSentimentDistribution(t, n = None, k = None):
     pos_list = getMostPos(n, reverse_tweets)
 
     return (render_template("main.html", bar_list = bar_list, donut_list = donut_list, k = k, neg_list = neg_list, pos_list = pos_list, n=n))
-
-#       Print tweets above a_t
-#       getTweetsAboveThr(args.a_t, **t)
-
-#       Print tweets below b_t
-#       getTweetsBelowThr(args.b_t, **t)
 
 if __name__ == '__main__':
     app.run()

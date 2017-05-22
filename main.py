@@ -193,47 +193,13 @@ def classify(score) :
     else :
         return "neutral"
 
-def classifyTweets(k, n, tweetList) :
-    print("classifying")
-    i = 0;
-    classification = "";
-    t = {}
-    knn = KNN()
-    model = knn.load("C:/Users/Aine/PycharmProjects/FinalYearProjectFolder/FinalYearProject/models/knn")
-    for tweet in tweetList:
-        print("Classifying tweet ", i, " of ", len(tweetList))
-        t = model.classify(tweet, discrete=False)
-        for _class, _probability in t.iteritems():
-            if _class == 'positive' and _probability > 0.9:
-                classification = "very positive"
-            elif _class == 'positive' and _probability > 0.7:
-                classification = "positive"
-            elif _class == 'negative' and _probability > 0.9:
-                classification = "very negative"
-            elif _class == 'negative' and _probability > 0.7:
-                classification = "negative"
-
-        if classification == "":
-            classification = "neutral"
-
-        t[tweet] = classification
-        print(tweet, ", ", classification)
-       # with open('new_tweets.csv', 'a') as csvfile:
-       #     writer = csv.writer(csvfile, delimiter=',',
-       #                         quotechar='"', quoting=csv.QUOTE_MINIMAL)
-       #     for tweet in t:
-       #         writer.writerow([tweet, classification])
-        i += 1;
-
-    print("Finished Classifying")
-    return (getSentimentDistribution(t, k, n))
-
-
 def getPercentages(list) :
     totalPositive = list[0] + list[1]
     neutral = list[2]
     totalNegative = list[3] + list[4]
+
     total = totalPositive + neutral + totalNegative
+
     PosPerc = 100 * (float(totalPositive) / float(total))
     NeutPerc = 100 * (float(neutral) / float(total))
     NegPerc = 100 * (float(totalNegative) / float(total))
@@ -242,6 +208,7 @@ def getPercentages(list) :
     donutList.insert(0, round(PosPerc, 2))
     donutList.insert(1, round(NeutPerc, 2))
     donutList.insert(2, round(NegPerc, 2))
+
     return donutList
 
 app = Flask(__name__)
@@ -253,8 +220,9 @@ def submit():
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
 def main(k=None, n=None):
-    print("main")
     k = request.form['search']
+
+    input_word=k
 
     parser = argparse.ArgumentParser()
     #parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
@@ -267,34 +235,48 @@ def main(k=None, n=None):
     num = str(500)
     twitter, knn = Twitter(), KNN()
 
-    t = {};
     keyword_list = []
 
     # Get model & keywords
     model = gensim.models.word2vec.Word2Vec.load('MyModel')
+
+    t = {};
 
     if k in model.vocab:
         keywords = model.most_similar(k)
         for k in keywords :
             keyword_list.append(k[0])
 
-    tweetList = []
+    query = ''
+
+    for k in keyword_list:
+        query = query + ' OR ' + k
+    query = query + ' OR ' + input_word
 
     for i in range(1, 3):
-        for tweet in twitter.search(k[0], start=i, count=100):
-            if tweet.language == "en" :
+        for tweet in twitter.search(query, start=i, count=100):
+            if tweet.language == "en":
                 text = tweet.text.lower()
                 _tweet = strcleaner.clean(text)
                 _tweet = _tweet.replace("\n", " ")
-                tweetList.append(_tweet)
+                score = str(sentTweetWords_final_score(_tweet))
+                t[_tweet] = score
+                with open('tweets.csv', 'a') as csvfile:
+                    writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    if not tweet.location:
+                        location = "none"
+                    else:
+                        location = tweet.location
+                    classification = classify(float(score))
+                    writer.writerow(
+                        [tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
 
-    classifyTweets(k, n, tweetList)
+    print(len(t))
+    return getSentimentDistribution(t, keyword_list, input_word, n)
 
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
-def getSentimentDistribution(t, n = None, k = None):
-    print("sentiment")
-    k = request.form['search']
+def getSentimentDistribution(t, keyword_list, input_word, n = None):
 
     str2num = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7":7, "8":8, "9":9, "10":10,
                "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19, "20": 20}
@@ -307,16 +289,17 @@ def getSentimentDistribution(t, n = None, k = None):
         n = 10
 
     sentiments = {}
-   # with open("new_tweets.csv", "rb") as csvfile:
-   #     reader = csv.reader(csvfile)
-   #     for row in reader:
-   #         if(k in row[0]) :
-   #             sentiment = row[1]
-    for tweet, sentiment in t.iteritems():
-        if not sentiment in sentiments:
-            sentiments[sentiment] = 1
-        else:
-            sentiments[sentiment] += 1
+
+    with open("tweets.csv", "rb") as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if any (k in row[4] for k in keyword_list):
+                sentiment = row[7]
+                if not sentiment in sentiments:
+                    sentiments[sentiment] = 1
+                else:
+                   sentiments[sentiment] += 1
+
     bar_list = []
     bar_list.insert(0, sentiments.get("very positive"))
     bar_list.insert(1, sentiments.get("positive"))
@@ -326,13 +309,15 @@ def getSentimentDistribution(t, n = None, k = None):
 
     donut_list = getPercentages(bar_list)
 
+    print(len(t))
+
     sorted_tweets = sorted(t.items(), key=operator.itemgetter(1))
     neg_list = getMostNeg(n, sorted_tweets)
 
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
     pos_list = getMostPos(n, reverse_tweets)
 
-    return (render_template("main.html", bar_list = bar_list, donut_list = donut_list, k = k, neg_list = neg_list, pos_list = pos_list, n=n))
+    return render_template("main.html", bar_list=bar_list, donut_list = donut_list, input_word = input_word, neg_list = neg_list, pos_list = pos_list, n=n)
 
 if __name__ == '__main__':
     app.run()

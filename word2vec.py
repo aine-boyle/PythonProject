@@ -70,6 +70,7 @@ model.init_sims(replace=True)
 
 model_name = "MyModel"
 model.save(model_name)
+#model.save(model_name, "C:/Users/Aine/PycharmProjects/FinalYearProjectFolder/FinalYearProject/models/")
 
 print(model.doesnt_match("man woman child kitchen".split()))
 print(model.most_similar("sad"))

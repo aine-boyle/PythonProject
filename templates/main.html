@@ -10,8 +10,8 @@
 	
 	<body background = "static/topography.png">
 
-	{% if k %}
-		<h1 style="float:inherit; text-align: center"> {{k}} </h1>
+	{% if input_word %}
+		<h1 style="float:inherit; text-align: center"> {{input_word}} </h1>
 	{% else %}
   		<h1 style="float:inherit; text-align: center"> null </h1>
 	{% endif %}
@@ -23,7 +23,6 @@
 				Morris.Donut({
 					element: 'donut-chart',
 					colors: ["#3c8dbc", "#bf00ff", "#ff3333"],
-
 					data: [
 						{label: "Positive", value: donut_list[0]},
 						{label: "Neutral", value: donut_list[1]},
@@ -46,7 +45,6 @@
 						{ x: 'Neg', y: bar_list[3]},
 						{ x: 'V.Neg', y: bar_list[4]},
 					],
-
 					xkey: 'x',
 					ykeys: ['y'],
 					labels: ['# Tweets'],
@@ -89,5 +87,6 @@
 				{% endfor %}
 			</ol>
 		</div>
+
 	</body>
 </html>

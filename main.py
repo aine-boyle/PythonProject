@@ -215,17 +215,17 @@ app = Flask(__name__)
 
 @app.route('/')
 def submit():
-    return render_template("search.html")
+    return render_template("index.html")
 
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
 def main(k=None, n=None):
     k = request.form['search']
+    print(k)
 
     input_word=k
 
     parser = argparse.ArgumentParser()
-    #parser.add_argument('--k', help='Keyword', type=str, nargs='*', required = True)
     parser.add_argument('--n', help='Print top & bottom n tweets', default = 20, type = int)
     parser.add_argument('--a_t', help='Print tweets above a_t', default = 0.80, type = float)
     parser.add_argument('--b_t', help='Print tweets below b_t', default = 0.20, type = float)
@@ -271,22 +271,18 @@ def main(k=None, n=None):
                     writer.writerow(
                         [tweet.id, tweet.date, tweet.author, location, keyword_list, _tweet, score, classification])
 
-    print(len(t))
     return getSentimentDistribution(t, keyword_list, input_word, n)
 
 @app.route('/')
 @app.route('/<k>/', methods=['POST'])
 def getSentimentDistribution(t, keyword_list, input_word, n = None):
 
+    print(len(t))
+    print("sentiment")
     str2num = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7":7, "8":8, "9":9, "10":10,
                "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19, "20": 20}
 
-    n = request.form['text']
-
-    if n:
-        n = str2num[request.form['text']]
-    else :
-        n = 10
+    n = 10
 
     sentiments = {}
 
@@ -295,10 +291,17 @@ def getSentimentDistribution(t, keyword_list, input_word, n = None):
         for row in reader:
             if any (k in row[4] for k in keyword_list):
                 sentiment = row[7]
+                print(sentiment)
                 if not sentiment in sentiments:
                     sentiments[sentiment] = 1
                 else:
                    sentiments[sentiment] += 1
+
+    print(sentiments.get("very positive"))
+    print(sentiments.get("positive"))
+    print(sentiments.get("neutral"))
+    print(sentiments.get("negative"))
+    print(sentiments.get("very negative"))
 
     bar_list = []
     bar_list.insert(0, sentiments.get("very positive"))
@@ -317,6 +320,7 @@ def getSentimentDistribution(t, keyword_list, input_word, n = None):
     reverse_tweets = sorted(t.items(), key=operator.itemgetter(1), reverse=True)
     pos_list = getMostPos(n, reverse_tweets)
 
+    print("returning")
     return render_template("main.html", bar_list=bar_list, donut_list = donut_list, input_word = input_word, neg_list = neg_list, pos_list = pos_list, n=n)
 
 if __name__ == '__main__':
